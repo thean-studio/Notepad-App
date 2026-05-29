@@ -1,17 +1,22 @@
 <?php
 
-use App\Livewire\NotepadPage;
+
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\AuthController;
 
-// Welcome route
-Route::get('/', function () {
-    return view('welcome');
-})->name('home');
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware('auth');
 
-// Login route
-Route::get('/login', function () {
-    return view('welcome');
-})->name('login');
+Route::get('/login', [AuthController::class, 'showLogin']);
+Route::post('/login', [AuthController::class, 'login']);
 
-// Notepad route
-Route::get('/notepad', NotepadPage::class)->name('notepad');
+Route::get('/register', [AuthController::class, 'showRegister']);
+Route::post('/register', [AuthController::class, 'register']);
+
+Route::post('/logout', [AuthController::class, 'logout'])->middleware('auth');
+
+Route::get('/dashboard', function () {
+    return view('dashboard');
+})->middleware('auth');
+
