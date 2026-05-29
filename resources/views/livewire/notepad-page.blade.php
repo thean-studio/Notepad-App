@@ -210,7 +210,6 @@
                     </div>
                 </div>
 
-                {{-- Divider + Delete --}}
                 <div class="flex-1"></div>
 
                 {{-- Save indicator --}}
@@ -222,7 +221,8 @@
                     Saved
                 </span>
 
-                <button wire:click="saveNote" x-on:click="triggerSave()"
+                {{-- Tombol Save Alpine --}}
+                <button x-on:click="triggerManualSave()"
                     class="px-3 py-1.5 text-xs font-medium bg-indigo-500 hover:bg-indigo-600 text-white rounded-lg transition-colors">
                     Save
                 </button>
@@ -246,7 +246,6 @@
                     <input wire:model.live.debounce.600ms="title"
                         type="text"
                         placeholder="Note title…"
-                        x-on:input="scheduleAutoSave()"
                         class="w-full text-3xl font-semibold text-gray-900 bg-transparent border-none outline-none placeholder-gray-300 mb-4 leading-tight" />
 
                     {{-- Tags display --}}
@@ -259,9 +258,10 @@
                     </div>
                     @endif
 
-                    {{-- Drawing Canvas --}}
+                    {{-- DRAWING CANVAS --}}
                     @if($showDrawingCanvas)
-                    <div class="mb-6 rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-sm">
+                    <div class="mb-6 rounded-2xl overflow-hidden border border-gray-200 bg-white shadow-sm"
+                         x-init="initCanvas('{{ addslashes($drawingData ?? '') }}')">
                         <div class="flex items-center justify-between px-4 py-2 bg-gray-50 border-b border-gray-200">
                             <span class="text-xs font-medium text-gray-600">✏️ Drawing Canvas</span>
                             <div class="flex items-center gap-2">
@@ -332,24 +332,19 @@
                     </div>
                     @endif
 
-                    {{-- Trix Rich Text Editor --}}
-                    <div class="rounded-xl border border-gray-200 overflow-hidden bg-white" x-data x-init="initTrix($wire)">
+                    {{-- TRIX RICH TEXT EDITOR --}}
+                    <div wire:ignore class="rounded-xl border border-gray-200 overflow-hidden bg-white"
+                         x-init="initTrix()">
 
                         {{-- Text Color Toolbar --}}
                         <div class="flex items-center gap-2 px-3 py-2 border-b border-gray-100 bg-gray-50">
                             <span class="text-xs text-gray-400 font-medium">Text color</span>
                             <div class="flex gap-1.5 flex-wrap">
                                 @foreach([
-                                    '#1f2937' => 'Black',
-                                    '#6b7280' => 'Gray',
-                                    '#ef4444' => 'Red',
-                                    '#f97316' => 'Orange',
-                                    '#eab308' => 'Yellow',
-                                    '#22c55e' => 'Green',
-                                    '#3b82f6' => 'Blue',
-                                    '#8b5cf6' => 'Purple',
-                                    '#ec4899' => 'Pink',
-                                    '#14b8a6' => 'Teal',
+                                    '#1f2937' => 'Black', '#6b7280' => 'Gray', '#ef4444' => 'Red',
+                                    '#f97316' => 'Orange', '#eab308' => 'Yellow', '#22c55e' => 'Green',
+                                    '#3b82f6' => 'Blue', '#8b5cf6' => 'Purple', '#ec4899' => 'Pink',
+                                    '#14b8a6' => 'Teal'
                                 ] as $hex => $name)
                                 <button
                                     onclick="applyTextColor('{{ $hex }}')"
@@ -358,13 +353,20 @@
                                     style="background: {{ $hex }};">
                                 </button>
                                 @endforeach
+                                
                                 {{-- Custom color --}}
                                 <label title="Custom color" class="w-5 h-5 rounded-full border-2 border-dashed border-gray-300 flex items-center justify-center cursor-pointer hover:scale-110 transition-transform overflow-hidden">
                                     <input type="color" id="customTextColor" class="opacity-0 absolute w-0 h-0"
                                         onchange="applyTextColor(this.value)" />
                                     <span class="text-gray-400 text-[10px] leading-none">+</span>
                                 </label>
+
+                                {{-- TOMBOL RESET TEXT COLOR --}}
+                                <button onclick="removeTextColor()" title="Reset Text Color" class="w-5 h-5 ml-1 rounded-full border border-gray-300 flex items-center justify-center hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                </button>
                             </div>
+                            
                             <div class="ml-auto flex items-center gap-1.5">
                                 <span class="text-xs text-gray-400">Highlight</span>
                                 @foreach(['#fef08a','#bbf7d0','#bfdbfe','#fecaca','#e9d5ff'] as $bg)
@@ -375,6 +377,11 @@
                                     style="background: {{ $bg }};">
                                 </button>
                                 @endforeach
+
+                                {{-- TOMBOL RESET HIGHLIGHT --}}
+                                <button onclick="removeHighlight()" title="Remove Highlight" class="w-5 h-5 ml-1 rounded border border-gray-300 flex items-center justify-center hover:bg-red-50 text-gray-400 hover:text-red-500 transition-colors">
+                                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                                </button>
                             </div>
                         </div>
 
@@ -460,163 +467,3 @@
     @endif
 
 </div>
-
-{{-- ═══════════════════════════════════════════
-     ALPINE JS APP
-═══════════════════════════════════════════ --}}
-<script>
-function notepadApp() {
-    return {
-        // Drawing
-        isDrawing: false,
-        brushSize: 4,
-        brushColor: '#1f2937',
-        eraserMode: false,
-        lastX: 0,
-        lastY: 0,
-        canvas: null,
-        ctx: null,
-
-        // Save indicator
-        saving: false,
-        saved: false,
-        autoSaveTimer: null,
-
-        init() {
-            this.$nextTick(() => {
-                this.initCanvas();
-            });
-
-            // Listen for Livewire saved event
-            Livewire.on('note-saved', () => {
-                this.saving = false;
-                this.saved = true;
-                setTimeout(() => { this.saved = false; }, 2000);
-            });
-        },
-
-        initCanvas() {
-            this.canvas = document.getElementById('drawingCanvas');
-            if (!this.canvas) return;
-            this.canvas.width  = this.canvas.offsetWidth;
-            this.canvas.height = 400;
-            this.ctx = this.canvas.getContext('2d');
-            this.ctx.fillStyle = '#ffffff';
-            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-
-            // Load existing drawing if present
-            const existing = @js($drawingData ?? '');
-            if (existing) {
-                const img = new Image();
-                img.onload = () => this.ctx.drawImage(img, 0, 0, this.canvas.width, this.canvas.height);
-                img.src = existing;
-            }
-        },
-
-        getPos(e) {
-            const rect = this.canvas.getBoundingClientRect();
-            const scaleX = this.canvas.width  / rect.width;
-            const scaleY = this.canvas.height / rect.height;
-            return {
-                x: (e.clientX - rect.left) * scaleX,
-                y: (e.clientY - rect.top)  * scaleY,
-            };
-        },
-
-        startDraw(e) {
-            this.isDrawing = true;
-            const pos = this.getPos(e);
-            this.lastX = pos.x;
-            this.lastY = pos.y;
-            this.ctx.beginPath();
-            this.ctx.arc(pos.x, pos.y, (this.eraserMode ? 20 : this.brushSize / 2), 0, Math.PI * 2);
-            this.ctx.fillStyle = this.eraserMode ? '#ffffff' : this.brushColor;
-            this.ctx.fill();
-        },
-
-        draw(e) {
-            if (!this.isDrawing) return;
-            const pos = this.getPos(e);
-            this.ctx.beginPath();
-            this.ctx.moveTo(this.lastX, this.lastY);
-            this.ctx.lineTo(pos.x, pos.y);
-            this.ctx.strokeStyle = this.eraserMode ? '#ffffff' : this.brushColor;
-            this.ctx.lineWidth   = this.eraserMode ? 40 : this.brushSize;
-            this.ctx.lineCap     = 'round';
-            this.ctx.lineJoin    = 'round';
-            this.ctx.stroke();
-            this.lastX = pos.x;
-            this.lastY = pos.y;
-        },
-
-        stopDraw() {
-            this.isDrawing = false;
-        },
-
-        clearCanvas() {
-            if (!this.ctx) return;
-            this.ctx.fillStyle = '#ffffff';
-            this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-        },
-
-        saveCanvasDrawing() {
-            if (!this.canvas) return;
-            const dataUrl = this.canvas.toDataURL('image/png');
-            @this.saveDrawing(dataUrl);
-        },
-
-        // Auto-save Trix content
-        scheduleAutoSave() {
-            clearTimeout(this.autoSaveTimer);
-            this.autoSaveTimer = setTimeout(() => {
-                this.saving = true;
-                @this.saveNote();
-            }, 1500);
-        },
-
-        triggerSave() {
-            this.saving = true;
-        },
-    };
-}
-
-// Trix integration with Livewire
-function initTrix(wire) {
-    const editor = document.querySelector('trix-editor');
-    if (!editor) return;
-
-    editor.addEventListener('trix-change', (e) => {
-        const html = e.target.innerHTML;
-        wire.set('content', html);
-        clearTimeout(window._trixSaveTimer);
-        window._trixSaveTimer = setTimeout(() => {
-            wire.call('saveNote');
-        }, 1500);
-    });
-}
-
-// Apply text color to selected text in Trix
-function applyTextColor(color) {
-    const editor = document.querySelector('trix-editor');
-    if (!editor || !editor.editor) return;
-    const sel = editor.editor.getSelectedRange();
-    if (sel[0] === sel[1]) return;
-    const existing = editor.innerHTML;
-    const trixDoc  = editor.editor.getDocument();
-    const text     = trixDoc.getStringAtRange(sel);
-    const span     = `<span style="color:${color}">${text}</span>`;
-    editor.editor.insertHTML(span);
-}
-
-// Apply highlight (background color) to selected text
-function applyHighlight(color) {
-    const editor = document.querySelector('trix-editor');
-    if (!editor || !editor.editor) return;
-    const sel = editor.editor.getSelectedRange();
-    if (sel[0] === sel[1]) return;
-    const trixDoc = editor.editor.getDocument();
-    const text    = trixDoc.getStringAtRange(sel);
-    const span    = `<span style="background-color:${color}">${text}</span>`;
-    editor.editor.insertHTML(span);
-}
-</script>

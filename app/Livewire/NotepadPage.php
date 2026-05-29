@@ -4,11 +4,13 @@ namespace App\Livewire;
 
 use App\Models\Note;
 use App\Models\Tag;
+use App\Models\User;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Livewire\Attributes\Computed;
 use Livewire\Component;
 use Livewire\WithFileUploads;
+use Illuminate\Contracts\View\View;
 
 class NotepadPage extends Component
 {
@@ -20,14 +22,14 @@ class NotepadPage extends Component
     public string $activeTab      = 'all'; // all | pinned
 
     // Active note state
-    public ?int    $activeNoteId  = null;
-    public string  $title         = '';
-    public string  $content       = '';
-    public string  $drawingData   = '';
-    public array   $images        = [];
-    public bool    $isPinned      = false;
-    public string  $noteColor     = '#ffffff';
-    public array   $selectedTags  = [];
+    public ?int   $activeNoteId  = null;
+    public string $title         = '';
+    public string $content       = '';
+    public string $drawingData   = '';
+    public array  $images        = [];
+    public bool   $isPinned      = false;
+    public string $noteColor     = '#ffffff';
+    public array  $selectedTags  = [];
 
     // UI panels
     public bool $showDrawingCanvas = false;
@@ -40,16 +42,18 @@ class NotepadPage extends Component
     // Image upload (temp)
     public $uploadedImage;
 
-    // Auto-save debounce flag (handled by JS + dispatch)
     public bool $isDirty = false;
 
     public function mount(): void
     {
-        $user = \App\Models\User::firstOrCreate(
-            ['email' => 'guest@notepad.com'],
-            ['name' => 'Guest', 'password' => bcrypt('password')]
-        );
-        Auth::login($user);
+        // Cek dulu apakah user SUDAH login. Jika belum, baru buat/login sebagai Guest.
+        if (!Auth::check()) {
+            $user = User::firstOrCreate(
+                ['email' => 'guest@notepad.com'],
+                ['name' => 'Guest', 'password' => bcrypt('password')]
+            );
+            Auth::login($user);
+        }
     }
 
     // ----------------------------------------------------------------
@@ -60,11 +64,11 @@ class NotepadPage extends Component
     public function notes()
     {
         return Note::where('user_id', Auth::id())
-            ->when($this->search, fn($q) => $q->where(function ($q) {
-                $q->where('title', 'like', '%' . $this->search . '%')
+            ->when($this->search, fn($q) => $q->where(function ($query) {
+                $query->where('title', 'like', '%' . $this->search . '%')
                     ->orWhere('content', 'like', '%' . $this->search . '%');
             }))
-            ->when($this->filterTagId, fn($q) => $q->whereHas('tags', fn($q) => $q->where('tags.id', $this->filterTagId)))
+            ->when($this->filterTagId, fn($q) => $q->whereHas('tags', fn($query) => $query->where('tags.id', $this->filterTagId)))
             ->when($this->activeTab === 'pinned', fn($q) => $q->where('is_pinned', true))
             ->with('tags')
             ->orderByDesc('is_pinned')
@@ -104,16 +108,24 @@ class NotepadPage extends Component
     {
         $note = Note::with('tags')->where('user_id', Auth::id())->findOrFail($id);
 
-        $this->activeNoteId  = $note->id;
-        $this->title         = $note->title;
-        $this->content       = $note->content ?? '';
-        $this->drawingData   = $note->drawing_data ?? '';
-        $this->images        = $note->images ?? [];
-        $this->isPinned      = $note->is_pinned;
-        $this->noteColor     = $note->color;
-        $this->selectedTags  = $note->tags->pluck('id')->toArray();
+        $this->activeNoteId      = $note->id;
+        $this->title             = $note->title;
+        $this->content           = $note->content ?? '';
+        $this->drawingData       = $note->drawing_data ?? '';
+        $this->images            = $note->images ?? [];
+        $this->isPinned          = $note->is_pinned;
+        $this->noteColor         = $note->color;
+        $this->selectedTags      = $note->tags->pluck('id')->toArray();
         $this->showDrawingCanvas = false;
-        $this->isDirty       = false;
+        $this->isDirty           = false;
+
+        $this->dispatch('trix-set-content', content: $note->content ?? '');
+    }
+
+    public function saveNoteWithContent(string $htmlContent): void
+    {
+        $this->content = $htmlContent;
+        $this->saveNote();
     }
 
     public function saveNote(): void
@@ -136,6 +148,7 @@ class NotepadPage extends Component
         $note->tags()->sync($this->selectedTags);
 
         $this->isDirty = false;
+
         $this->dispatch('note-saved');
     }
 
@@ -145,13 +158,15 @@ class NotepadPage extends Component
             return;
         }
 
-        Note::where('user_id', Auth::id())->findOrFail($this->activeNoteId)->delete();
+        $note = Note::where('user_id', Auth::id())->findOrFail($this->activeNoteId);
 
-        $this->activeNoteId = null;
-        $this->title        = '';
-        $this->content      = '';
-        $this->images       = [];
-        $this->drawingData  = '';
+        $note->delete();
+
+        $this->activeNoteId  = null;
+        $this->title         = '';
+        $this->content       = '';
+        $this->images        = [];
+        $this->drawingData   = '';
     }
 
     public function togglePin(): void
@@ -172,9 +187,9 @@ class NotepadPage extends Component
 
     public function saveDrawing(string $dataUrl): void
     {
-        $this->drawingData = $dataUrl;
-        $this->saveNote();
+        $this->drawingData       = $dataUrl;
         $this->showDrawingCanvas = false;
+        $this->saveNote();
     }
 
     public function clearDrawing(): void
@@ -191,7 +206,7 @@ class NotepadPage extends Component
     {
         $this->validate(['uploadedImage' => 'image|max:4096']);
 
-        $path   = $this->uploadedImage->store('note-images', 'public');
+        $path           = $this->uploadedImage->store('note-images', 'public');
         $this->images[] = Storage::url($path);
         $this->uploadedImage = null;
         $this->saveNote();
@@ -199,8 +214,17 @@ class NotepadPage extends Component
 
     public function removeImage(int $index): void
     {
-        array_splice($this->images, $index, 1);
-        $this->saveNote();
+        if (isset($this->images[$index])) {
+            $imageUrl = $this->images[$index];
+            $path = str_replace('/storage/', '', $imageUrl);
+
+            if (Storage::disk('public')->exists($path)) {
+                Storage::disk('public')->delete($path);
+            }
+
+            array_splice($this->images, $index, 1);
+            $this->saveNote();
+        }
     }
 
     // ----------------------------------------------------------------
@@ -228,7 +252,7 @@ class NotepadPage extends Component
     public function deleteTag(int $id): void
     {
         Tag::where('user_id', Auth::id())->findOrFail($id)->delete();
-        $this->selectedTags = array_filter($this->selectedTags, fn($t) => $t !== $id);
+        $this->selectedTags = array_values(array_filter($this->selectedTags, fn($t) => $t !== $id));
         unset($this->allTags);
     }
 
@@ -245,7 +269,7 @@ class NotepadPage extends Component
     // Render
     // ----------------------------------------------------------------
 
-    public function render()
+    public function render(): View
     {
         return view('livewire.notepad-page')->layout('layouts.notepad');
     }
