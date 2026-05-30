@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" class="h-full">
+
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -20,23 +21,47 @@
     @livewireStyles
 
     <style>
-        trix-toolbar [data-trix-button-group="file-tools"] { display: none !important; }
-        trix-editor { min-height: 300px; outline: none; font-size: 15px; line-height: 1.7; }
-        trix-editor:focus { outline: none; box-shadow: none; }
-        .note-card { transition: transform 0.15s, box-shadow 0.15s; }
-        .note-card:hover { transform: translateY(-1px); }
-        html, body { height: 100%; margin: 0; }
+        trix-toolbar [data-trix-button-group="file-tools"] {
+            display: none !important;
+        }
+
+        trix-editor {
+            min-height: 300px;
+            outline: none;
+            font-size: 15px;
+            line-height: 1.7;
+        }
+
+        trix-editor:focus {
+            outline: none;
+            box-shadow: none;
+        }
+
+        .note-card {
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
+
+        .note-card:hover {
+            transform: translateY(-1px);
+        }
+
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+        }
     </style>
 </head>
+
 <body class="h-full bg-gray-50 font-sans antialiased">
-    
+
     {{-- INI TEMPAT LIVEWIRE COMPONENT DIRENDER --}}
     {{ $slot }}
 
     @livewireScripts
 
     <script>
-    // ================================================================
+        // ================================================================
     // STRATEGI BARU — SIMPAN KONTEN TRIX DI JS, KIRIM HANYA SAAT SAVE
     // ================================================================
 
@@ -228,4 +253,5 @@
     }
     </script>
 </body>
+
 </html>
