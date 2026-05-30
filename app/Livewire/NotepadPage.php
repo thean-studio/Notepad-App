@@ -16,10 +16,12 @@ class NotepadPage extends Component
 {
     use WithFileUploads;
 
-    public string $search         = '';
-    public ?int   $filterTagId    = null;
-    public string $activeTab      = 'all'; // Bisa 'all', 'pinned', atau 'trash'
+    // Sidebar & search
+    public string $search      = '';
+    public ?int   $filterTagId = null;
+    public string $activeTab   = 'all'; // all | pinned | trash
 
+    // Active note
     public ?int   $activeNoteId  = null;
     public string $title         = '';
     public string $content       = '';
@@ -30,50 +32,59 @@ class NotepadPage extends Component
     public string $titleColor    = '#1f2937';
     public array  $selectedTags  = [];
 
+    // UI panels
     public bool $showDrawingCanvas = false;
     public bool $showTagManager    = false;
     public bool $isFullscreen      = false;
 
+    // Tag manager
     public string $newTagName  = '';
     public string $newTagColor = '#6366f1';
 
+    // Image upload
     public $uploadedImage;
     public bool $isDirty = false;
+
+    // ── Mount ─────────────────────────────────────────────────────
 
     public function mount(): void
     {
         if (!Auth::check()) {
-            $user = User::firstOrCreate(
+            Auth::login(User::firstOrCreate(
                 ['email' => 'guest@notepad.com'],
                 ['name' => 'Guest', 'password' => bcrypt('password')]
-            );
-            Auth::login($user);
+            ));
         }
     }
+
+    // ── Computed ──────────────────────────────────────────────────
 
     #[Computed]
     public function notes()
     {
         $query = Note::where('user_id', Auth::id());
 
-        // Logika untuk menampilkan tab sampah atau tab biasa
         if ($this->activeTab === 'trash') {
             $query->onlyTrashed();
         } else {
             if ($this->activeTab === 'pinned') {
                 $query->where('is_pinned', true);
             }
+            $query->when($this->search, fn($q) => $q->where(
+                fn($q) =>
+                $q->where('title', 'like', '%' . $this->search . '%')
+                    ->orWhere('content', 'like', '%' . $this->search . '%')
+            ))
+                ->when($this->filterTagId, fn($q) => $q->whereHas(
+                    'tags',
+                    fn($q) =>
+                    $q->where('tags.id', $this->filterTagId)
+                ))
+                ->orderByDesc('is_pinned')
+                ->orderByDesc('updated_at');
         }
 
-        return $query->when($this->search, fn($q) => $q->where(function ($query) {
-            $query->where('title', 'like', '%' . $this->search . '%')
-                ->orWhere('content', 'like', '%' . $this->search . '%');
-        }))
-            ->when($this->filterTagId, fn($q) => $q->whereHas('tags', fn($query) => $query->where('tags.id', $this->filterTagId)))
-            ->with('tags')
-            ->orderByDesc('is_pinned')
-            ->orderByDesc('updated_at')
-            ->get();
+        return $query->with('tags')->get();
     }
 
     #[Computed]
@@ -85,19 +96,22 @@ class NotepadPage extends Component
     #[Computed]
     public function activeNote()
     {
-        // Pakai withTrashed() supaya catatan di sampah tetap bisa dirender
-        return $this->activeNoteId ? Note::withTrashed()->with('tags')->find($this->activeNoteId) : null;
+        return $this->activeNoteId
+            ? Note::withTrashed()->with('tags')->find($this->activeNoteId)
+            : null;
     }
+
+    // ── Note CRUD ─────────────────────────────────────────────────
 
     public function createNote(): void
     {
-        $this->activeTab = 'all'; // Kembalikan ke tab all saat bikin catatan baru
+        $this->activeTab = 'all';
 
         $note = Note::create([
-            'user_id' => Auth::id(),
-            'title'   => 'Untitled Note',
-            'content' => '',
-            'color'   => '#ffffff',
+            'user_id'     => Auth::id(),
+            'title'       => 'Untitled Note',
+            'content'     => '',
+            'color'       => '#ffffff',
             'title_color' => '#1f2937',
         ]);
 
@@ -106,8 +120,9 @@ class NotepadPage extends Component
 
     public function openNote(int $id): void
     {
-        // Tambahkan withTrashed() agar bisa membuka catatan di tong sampah
-        $note = Note::withTrashed()->with('tags')->where('user_id', Auth::id())->findOrFail($id);
+        $note = Note::withTrashed()->with('tags')
+            ->where('user_id', Auth::id())
+            ->findOrFail($id);
 
         $this->activeNoteId      = $note->id;
         $this->title             = $note->title;
@@ -126,21 +141,16 @@ class NotepadPage extends Component
 
     public function saveNoteWithContent(string $htmlContent): void
     {
-        // Jangan izinkan save jika sedang di tab sampah
         if ($this->activeTab === 'trash') return;
-
         $this->content = $htmlContent;
         $this->saveNote();
     }
 
     public function saveNote(): void
     {
-        if (! $this->activeNoteId || $this->activeTab === 'trash') {
-            return;
-        }
+        if (!$this->activeNoteId || $this->activeTab === 'trash') return;
 
         $note = Note::where('user_id', Auth::id())->findOrFail($this->activeNoteId);
-
         $note->update([
             'title'        => $this->title ?: 'Untitled Note',
             'content'      => $this->content,
@@ -150,46 +160,35 @@ class NotepadPage extends Component
             'color'        => $this->noteColor,
             'title_color'  => $this->titleColor,
         ]);
-
         $note->tags()->sync($this->selectedTags);
         $this->isDirty = false;
         $this->dispatch('note-saved');
     }
 
+    // Soft delete — pindah ke sampah
     public function deleteNote(): void
     {
-        if (! $this->activeNoteId) {
-            return;
-        }
-
-        // Ini sekarang akan melakukan Soft Delete
-        $note = Note::where('user_id', Auth::id())->findOrFail($this->activeNoteId);
-        $note->delete();
-
-        $this->activeNoteId  = null;
-        $this->title         = '';
-        $this->content       = '';
-        $this->images        = [];
-        $this->drawingData   = '';
+        if (!$this->activeNoteId) return;
+        Note::where('user_id', Auth::id())->findOrFail($this->activeNoteId)->delete();
+        $this->resetEditor();
     }
 
-    // FUNGSI BARU: Mengembalikan catatan dari sampah
+    // Restore dari sampah
     public function restoreNote(int $id): void
     {
         $note = Note::onlyTrashed()->where('user_id', Auth::id())->find($id);
         if ($note) {
             $note->restore();
-            $this->activeNoteId = null;
-            $this->activeTab = 'all'; // Langsung pindah ke tab semua catatan
+            $this->activeTab = 'all';
+            $this->resetEditor();
         }
     }
 
-    // FUNGSI BARU: Menghapus catatan secara permanen
+    // Hapus permanen
     public function forceDeleteNote(int $id): void
     {
         $note = Note::onlyTrashed()->where('user_id', Auth::id())->find($id);
         if ($note) {
-            // Hapus gambar fisik dari storage jika ada
             if (!empty($note->images)) {
                 foreach ($note->images as $imageUrl) {
                     $path = str_replace('/storage/', '', $imageUrl);
@@ -198,20 +197,15 @@ class NotepadPage extends Component
                     }
                 }
             }
-
             $note->forceDelete();
-            $this->activeNoteId = null;
-            $this->title = '';
-            $this->content = '';
-            $this->images = [];
-            $this->drawingData = '';
+            $this->resetEditor();
         }
     }
 
     public function togglePin(): void
     {
         if ($this->activeTab === 'trash') return;
-        $this->isPinned = ! $this->isPinned;
+        $this->isPinned = !$this->isPinned;
         $this->saveNote();
     }
 
@@ -231,8 +225,10 @@ class NotepadPage extends Component
 
     public function toggleFullscreen(): void
     {
-        $this->isFullscreen = ! $this->isFullscreen;
+        $this->isFullscreen = !$this->isFullscreen;
     }
+
+    // ── Drawing ───────────────────────────────────────────────────
 
     public function saveDrawing(string $dataUrl): void
     {
@@ -249,12 +245,13 @@ class NotepadPage extends Component
         $this->saveNote();
     }
 
+    // ── Images ────────────────────────────────────────────────────
+
     public function uploadImage(): void
     {
         if ($this->activeTab === 'trash') return;
         $this->validate(['uploadedImage' => 'image|max:4096']);
-
-        $path           = $this->uploadedImage->store('note-images', 'public');
+        $path = $this->uploadedImage->store('note-images', 'public');
         $this->images[] = Storage::url($path);
         $this->uploadedImage = null;
         $this->saveNote();
@@ -263,18 +260,14 @@ class NotepadPage extends Component
     public function removeImage(int $index): void
     {
         if ($this->activeTab === 'trash') return;
-        if (isset($this->images[$index])) {
-            $imageUrl = $this->images[$index];
-            $path = str_replace('/storage/', '', $imageUrl);
-
-            if (Storage::disk('public')->exists($path)) {
-                Storage::disk('public')->delete($path);
-            }
-
-            array_splice($this->images, $index, 1);
-            $this->saveNote();
-        }
+        if (!isset($this->images[$index])) return;
+        $path = str_replace('/storage/', '', $this->images[$index]);
+        if (Storage::disk('public')->exists($path)) Storage::disk('public')->delete($path);
+        array_splice($this->images, $index, 1);
+        $this->saveNote();
     }
+
+    // ── Tags ──────────────────────────────────────────────────────
 
     public function createTag(): void
     {
@@ -282,14 +275,8 @@ class NotepadPage extends Component
             'newTagName'  => 'required|string|max:32',
             'newTagColor' => 'required|string',
         ]);
-
-        Tag::create([
-            'user_id' => Auth::id(),
-            'name'    => $this->newTagName,
-            'color'   => $this->newTagColor,
-        ]);
-
-        $this->newTagName  = '';
+        Tag::create(['user_id' => Auth::id(), 'name' => $this->newTagName, 'color' => $this->newTagColor]);
+        $this->newTagName = '';
         $this->newTagColor = '#6366f1';
         unset($this->allTags);
     }
@@ -310,6 +297,21 @@ class NotepadPage extends Component
             $this->selectedTags[] = $id;
         }
     }
+
+    // ── Helper ────────────────────────────────────────────────────
+
+    private function resetEditor(): void
+    {
+        $this->activeNoteId  = null;
+        $this->title         = '';
+        $this->content       = '';
+        $this->drawingData   = '';
+        $this->images        = [];
+        $this->selectedTags  = [];
+        $this->isPinned      = false;
+    }
+
+    // ── Render ────────────────────────────────────────────────────
 
     public function render(): View
     {

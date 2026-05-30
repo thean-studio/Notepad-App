@@ -40,14 +40,20 @@
         <div class="flex gap-1 px-4 pb-2">
             <button wire:click="$set('activeTab','all')"
                 class="flex-1 py-1.5 text-xs font-medium rounded-lg transition-colors
-                    {{ $activeTab === 'all' ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
-                All Notes
+                    {{ $activeTab === 'all' ? 'bg-yellow-100 dark:bg-yellow-900/50 text-yellow-700 dark:text-yellow-400' : 
+                    'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
+                📜 All Notes
             </button>
             <button wire:click="$set('activeTab','pinned')"
                 class="flex-1 py-1.5 text-xs font-medium rounded-lg transition-colors
-                    {{ $activeTab === 'pinned' ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-400' : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
+                    {{ $activeTab === 'pinned' ? 'bg-indigo-100 dark:bg-indigo-900/50 text-indigo-700 dark:text-indigo-400' : 
+                    'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
                 📌 Pinned
             </button>
+            <button wire:click="$set('activeTab','trash')" class="flex-1 py-1.5 text-xs font-medium rounded-lg transition-colors {{ $activeTab === 'trash'
+                    ? '
+                                bg-red-100 dark:bg-red-900/50 text-red-600 dark:text-red-400'
+                    : 'text-gray-500 dark:text-gray-400 hover:bg-gray-100 dark:hover:bg-gray-700' }}">🗑️ Trash </button>
         </div>
 
         {{-- Tags filter --}}
@@ -57,14 +63,14 @@
             <div class="flex flex-wrap gap-1.5">
                 <button wire:click="$set('filterTagId', null)"
                     class="px-2.5 py-0.5 text-xs rounded-full border transition-colors
-                        {{ is_null($filterTagId) ? 'bg-gray-800 dark:bg-gray-600 text-white border-gray-800 dark:border-gray-600' : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-400' }}">
+                                {{ is_null($filterTagId) ? 'bg-gray-800 dark:bg-gray-600 text-white border-gray-800 dark:border-gray-600' : 'border-gray-300 dark:border-gray-600 text-gray-500 dark:text-gray-400 hover:border-gray-400' }}">
                     All
                 </button>
                 @foreach ($this->allTags as $tag)
                 <button wire:click="$set('filterTagId', {{ $tag->id }})"
                     class="px-2.5 py-0.5 text-xs rounded-full border transition-colors" style="background-color: {{ $filterTagId === $tag->id ? $tag->color : 'transparent' }};
-                           color: {{ $filterTagId === $tag->id ? '#fff' : $tag->color }};
-                           border-color: {{ $tag->color }};">
+                                color: {{ $filterTagId === $tag->id ? '#fff' : $tag->color }};
+                                border-color: {{ $tag->color }};">
                     {{ $tag->name }}
                 </button>
                 @endforeach
@@ -77,12 +83,14 @@
             @forelse($this->notes as $note)
             <button wire:click="openNote({{ $note->id }})"
                 class="note-card w-full text-left px-3 py-3 rounded-xl border transition-all
-                    {{ $activeNoteId === $note->id
-                        ? 'bg-indigo-50 dark:bg-gray-700 border-indigo-200 dark:border-gray-600 shadow-sm'
-                        : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600 hover:shadow-sm' }}"
+                            {{ $activeNoteId === $note->id
+                                ? 'bg-indigo-50 dark:bg-gray-700 border-indigo-200 dark:border-gray-600 shadow-sm'
+                                : 'bg-white dark:bg-gray-800 border-gray-100 dark:border-gray-700 hover:border-gray-200 dark:hover:border-gray-600 hover:shadow-sm' }}"
                 style="{{ $note->color !== '#ffffff' ? 'border-left: 3px solid ' . $note->color . ';' : '' }}">
                 <div class="flex items-start justify-between gap-2">
-                    <p class="text-sm font-medium text-gray-800 dark:text-gray-200 truncate leading-5">
+                    {{-- PEMBARUAN: Ditambahkan inline style color untuk menyamakan warna judul di sidebar --}}
+                    <p class="text-sm font-medium truncate leading-5 {{ $note->title_color ? '' : 'text-gray-800 dark:text-gray-200' }}"
+                        style="{{ $note->title_color ? 'color: ' . $note->title_color . ';' : '' }}">
                         {{ $note->is_pinned ? '📌 ' : '' }}{{ $note->title }}
                     </p>
                     <span class="text-[10px] text-gray-400 shrink-0 mt-0.5">
@@ -124,17 +132,6 @@
 
         {{-- Tag Manager, Trash, Settings & Dark Mode --}}
         <div class="border-t border-gray-100 dark:border-gray-700 p-3 space-y-1.5">
-
-            {{-- Tombol Sampah --}}
-            <button wire:click="$set('activeTab','trash')"
-                class="flex items-center gap-2 w-full px-3 py-2 text-xs rounded-lg transition-colors
-                {{ $activeTab === 'trash' ? 'bg-red-50 dark:bg-red-900/30 text-red-600 dark:text-red-400' : 'text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                </svg>
-                Sampah
-            </button>
 
             <button wire:click="$toggle('showTagManager')"
                 class="flex items-center gap-2 w-full px-3 py-2 text-xs text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-lg transition-colors">
@@ -273,7 +270,7 @@
             {{-- Drawing --}}
             <button wire:click="$toggle('showDrawingCanvas')"
                 class="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-lg transition-colors
-                            {{ $showDrawingCanvas ? 'bg-indigo-500 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
+                                {{ $showDrawingCanvas ? 'bg-indigo-500 text-white' : 'text-gray-600 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-700' }}">
                 <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                         d="M15.232 5.232l3.536 3.536m-2.036-5.036a2.5 2.5 0 113.536 3.536L6.5 21.036H3v-3.572L16.732 3.732z" />
