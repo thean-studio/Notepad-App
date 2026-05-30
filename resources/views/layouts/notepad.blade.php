@@ -31,43 +31,161 @@
     </script>
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="https://unpkg.com/trix@2/dist/trix.css">
     <script type="text/javascript" src="https://unpkg.com/trix@2/dist/trix.umd.min.js"></script>
 
     @livewireStyles
 
     <style>
-        trix-toolbar [data-trix-button-group="file-tools"] {
-            display: none !important;
-        }
+    /* Sembunyikan tombol file attachment */
+    trix-toolbar [data-trix-button-group="file-tools"] {
+        display: none !important;
+    }
 
-        trix-editor {
-            min-height: 300px;
-            outline: none;
-            font-size: 15px;
-            line-height: 1.7;
-        }
+    /* Styling toolbar Trix agar lebih lega */
+    trix-toolbar {
+        background-color: #f9fafb !important;
+        border-bottom: 1px solid #e5e7eb !important;
+        padding: 10px 12px !important;
+        display: flex !important;
+        flex-wrap: wrap !important;
+        gap: 8px !important;
+        align-items: center !important;
+        justify-content: flex-start !important;
+    }
 
-        trix-editor:focus {
-            outline: none;
-            box-shadow: none;
-        }
+    .dark trix-toolbar {
+        background-color: #111827 !important;
+        border-bottom: 1px solid #374151 !important;
+    }
 
-        .note-card {
-            transition: transform 0.15s, box-shadow 0.15s;
-        }
+    trix-toolbar .trix-button-group {
+        border: 1px solid #d1d5db !important;
+        border-radius: 8px !important;
+        margin: 0 !important;
+        display: flex !important;
+        overflow: hidden !important;
+    }
 
-        .note-card:hover {
-            transform: translateY(-1px);
-        }
+    .dark trix-toolbar .trix-button-group {
+        border-color: #4b5563 !important;
+    }
 
-        html,
-        body {
-            height: 100%;
-            margin: 0;
-        }
-    </style>
+    trix-toolbar .trix-button {
+        border: none !important;
+        background: transparent !important;
+        color: #374151 !important;
+        padding: 8px 14px !important;
+        font-size: 14px !important;
+        border-radius: 0 !important;
+        min-width: 40px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        transition: background-color 0.2s;
+    }
+
+    .dark trix-toolbar .trix-button {
+        color: #d1d5db !important;
+    }
+
+    trix-toolbar .trix-button:hover {
+        background-color: #e5e7eb !important;
+    }
+
+    .dark trix-toolbar .trix-button:hover {
+        background-color: #374151 !important;
+    }
+
+    trix-toolbar .trix-button.trix-active {
+        background-color: #6366f1 !important;
+        color: white !important;
+    }
+
+    /* Ikon agar tetap terlihat jelas */
+    trix-toolbar .trix-button::before {
+        filter: none !important;
+        opacity: 0.8;
+    }
+
+    .dark trix-toolbar .trix-button::before {
+        filter: invert(0.8) !important;
+    }
+
+    .dark trix-toolbar .trix-button.trix-active::before {
+        filter: invert(1) !important;
+    }
+
+    /* Trix editor content - lebih nyaman untuk menulis */
+    trix-editor {
+        min-height: 400px;
+        outline: none;
+        padding: 20px !important;
+        font-size: 16px !important;
+        line-height: 1.8 !important;
+        border: none !important;
+    }
+
+    trix-editor:focus {
+        outline: none !important;
+        box-shadow: none !important;
+    }
+
+    trix-editor h1 {
+        font-size: 1.8em !important;
+        font-weight: 700 !important;
+        margin: 0.5em 0 !important;
+    }
+
+    .dark trix-editor h1 {
+        color: #f9fafb !important;
+    }
+
+    trix-editor blockquote {
+        border-left: 4px solid #6366f1 !important;
+        padding-left: 16px !important;
+        margin: 12px 0 !important;
+        color: #6b7280 !important;
+        font-style: italic !important;
+    }
+
+    .dark trix-editor blockquote {
+        border-left-color: #818cf8 !important;
+        color: #9ca3af !important;
+    }
+
+    trix-editor pre {
+        background-color: #1f2937 !important;
+        color: #e5e7eb !important;
+        padding: 16px !important;
+        border-radius: 8px !important;
+        font-family: 'Courier New', monospace !important;
+        font-size: 14px !important;
+        overflow-x: auto !important;
+        margin: 12px 0 !important;
+    }
+
+    .dark trix-editor pre {
+        background-color: #111827 !important;
+        border: 1px solid #374151 !important;
+    }
+
+    /* Note card */
+    .note-card {
+        transition: transform 0.15s, box-shadow 0.15s;
+    }
+
+    .note-card:hover {
+        transform: translateY(-1px);
+    }
+
+    html, body {
+        height: 100%;
+        margin: 0;
+    }
+</style>
 </head>
 
 <body class="h-full bg-gray-50 dark:bg-gray-900 font-sans antialiased">
@@ -78,7 +196,7 @@
 
     <script>
         // ============================================================
-        // DARK MODE — toggle class di <html> dan simpan ke localStorage
+        // DARK MODE
         // ============================================================
         function toggleDarkMode() {
             const html = document.documentElement;
@@ -93,7 +211,67 @@
         }
 
         // ============================================================
-        // TRIX — simpan konten di JS, kirim ke Livewire saat save
+        // KONFIGURASI TRIX TOOLBAR - Menampilkan semua fitur
+        // ============================================================
+        Trix.config.blockAttributes.heading1 = {
+            tagName: 'h1',
+            terminal: true,
+            breakOnReturn: true,
+            group: false
+        };
+
+        Trix.config.blockAttributes.quote = {
+            tagName: 'blockquote',
+            nestable: true
+        };
+
+        Trix.config.blockAttributes.code = {
+            tagName: 'pre',
+            nestable: false
+        };
+
+        // Trix toolbar lengkap
+        Trix.config.toolbar = {
+            getDefaultHTML: function() {
+                return `
+                    <div class="trix-button-row">
+                        <span class="trix-button-group trix-button-group--text-tools" data-trix-button-group="text-tools">
+                            <button type="button" class="trix-button trix-button--icon trix-button--icon-bold" data-trix-attribute="bold" data-trix-key="b" title="Bold">Bold</button>
+                            <button type="button" class="trix-button trix-button--icon trix-button--icon-italic" data-trix-attribute="italic" data-trix-key="i" title="Italic">Italic</button>
+                            <button type="button" class="trix-button trix-button--icon trix-button--icon-strike" data-trix-attribute="strike" title="Strikethrough">Strike</button>
+                            <button type="button" class="trix-button trix-button--icon trix-button--icon-link" data-trix-attribute="href" data-trix-action="link" data-trix-key="k" title="Link">Link</button>
+                        </span>
+                        <span class="trix-button-group trix-button-group--block-tools" data-trix-button-group="block-tools">
+                            <button type="button" class="trix-button trix-button--icon trix-button--icon-heading-1" data-trix-attribute="heading1" title="Heading">Heading</button>
+                            <button type="button" class="trix-button trix-button--icon trix-button--icon-quote" data-trix-attribute="quote" title="Quote">Quote</button>
+                            <button type="button" class="trix-button trix-button--icon trix-button--icon-code" data-trix-attribute="code" title="Code">Code</button>
+                            <button type="button" class="trix-button trix-button--icon trix-button--icon-bullet-list" data-trix-attribute="bullet" title="Bullets">Bullets</button>
+                            <button type="button" class="trix-button trix-button--icon trix-button--icon-number-list" data-trix-attribute="number" title="Numbers">Numbers</button>
+                            <button type="button" class="trix-button trix-button--icon trix-button--icon-decrease-nesting-level" data-trix-action="decreaseNestingLevel" title="Decrease Level">Outdent</button>
+                            <button type="button" class="trix-button trix-button--icon trix-button--icon-increase-nesting-level" data-trix-action="increaseNestingLevel" title="Increase Level">Indent</button>
+                        </span>
+                        <span class="trix-button-group trix-button-group--file-tools" data-trix-button-group="file-tools">
+                            <button type="button" class="trix-button trix-button--icon trix-button--icon-attach" data-trix-action="attachFiles" title="Attach Files">Attach</button>
+                        </span>
+                        <span class="trix-button-group-spacer"></span>
+                    </div>
+                    <div class="trix-dialogs" data-trix-dialogs>
+                        <div class="trix-dialog trix-dialog--link" data-trix-dialog="href" data-trix-dialog-attribute="href">
+                            <div class="trix-dialog__link-fields">
+                                <input type="url" name="href" class="trix-input trix-input--dialog" placeholder="Enter URL…" aria-label="URL" required data-trix-input>
+                                <div class="trix-button-group">
+                                    <input type="button" class="trix-button trix-button--dialog" value="Link" data-trix-method="setAttribute">
+                                    <input type="button" class="trix-button trix-button--dialog" value="Unlink" data-trix-method="removeAttribute">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }
+        };
+
+        // ============================================================
+        // TRIX - simpan konten
         // ============================================================
         window._trixContent = '';
         window._trixFromServer = false;
@@ -118,7 +296,7 @@
         });
 
         // ============================================================
-        // TRIX — warna teks & highlight
+        // TRIX - warna teks & highlight
         // ============================================================
         Trix.config.textAttributes.textColor = {
             styleProperty: 'color',
@@ -157,26 +335,8 @@
             el.editor.deactivateAttribute('backgroundColor');
         }
 
-        function trixFormat(attr) {
-            const el = document.querySelector('trix-editor');
-            if (!el || !el.editor) return;
-            el.focus();
-            el.editor.attributeIsActive(attr) ?
-                el.editor.deactivateAttribute(attr) :
-                el.editor.activateAttribute(attr);
-        }
-
-        function trixBlock(attr) {
-            const el = document.querySelector('trix-editor');
-            if (!el || !el.editor) return;
-            el.focus();
-            el.editor.attributeIsActive(attr) ?
-                el.editor.deactivateAttribute(attr) :
-                el.editor.activateAttribute(attr);
-        }
-
         // ============================================================
-        // ALPINE — komponen utama notepad
+        // ALPINE - komponen notepad
         // ============================================================
         function notepadApp() {
             return {

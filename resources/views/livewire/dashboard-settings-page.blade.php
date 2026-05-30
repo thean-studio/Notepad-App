@@ -17,14 +17,6 @@
 
         {{-- Navigation --}}
         <nav class="flex-1 px-3 py-4 space-y-1">
-            <a href="{{ route('dashboard-settings') }}"
-                class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/50 rounded-lg transition-colors">
-                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
-                </svg>
-                Dashboard Settings
-            </a>
             <a href="{{ route('notepad') }}"
                 class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-400 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -33,6 +25,16 @@
                 </svg>
                 Notes
             </a>
+            
+            <a href="{{ route('dashboard-settings') }}"
+                class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-indigo-600 dark:text-indigo-400 bg-indigo-50 dark:bg-indigo-900/50 rounded-lg transition-colors">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z" />
+                </svg>
+                Dashboard Settings
+            </a>
+
             <a href="{{ route('settings') }}"
                 class="flex items-center gap-3 px-3 py-2.5 text-sm font-medium text-gray-600 dark:text-gray-400 rounded-lg hover:bg-gray-50 dark:hover:bg-gray-700 transition-colors">
                 <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -99,13 +101,35 @@
     ═══════════════════════════════════════════ --}}
     <main class="flex-1 flex flex-col overflow-hidden">
 
-        {{-- Header --}}
+        {{-- Header dengan User Info --}}
         <div
             class="flex items-center justify-between px-8 py-6 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 shadow-sm transition-colors duration-200">
             <div>
                 <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Dashboard Settings</h1>
                 <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Ringkasan aktivitas dan statistik catatan Anda
                 </p>
+            </div>
+
+            {{-- User Info di Header --}}
+            <div class="flex items-center gap-3">
+                <div class="text-right">
+                    <p class="text-sm font-medium text-gray-900 dark:text-white">
+                        {{ auth()->check() ? auth()->user()->name : 'Guest' }}</p>
+                    <p class="text-xs text-gray-500 dark:text-gray-400">
+                        {{ auth()->check() ? auth()->user()->email : 'guest@notepad.com' }}</p>
+                </div>
+                <div
+                    class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden flex-shrink-0 border-2 border-indigo-200 dark:border-indigo-800">
+                    @if (auth()->check() && auth()->user()->profile_picture)
+                        <img src="{{ asset('storage/' . auth()->user()->profile_picture) }}"
+                            alt="{{ auth()->user()->name ?? 'User' }}" class="w-full h-full object-cover">
+                    @else
+                        <svg class="w-6 h-6 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
+                            <path
+                                d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z" />
+                        </svg>
+                    @endif
+                </div>
             </div>
         </div>
 
@@ -252,15 +276,6 @@
                                 {{ $totalNotes > 0 ? round(($pinnedNotes / $totalNotes) * 100) : 0 }}%
                             </span>
                         </div>
-                        @if ($totalTimeInHours > 0)
-                            <div class="flex justify-between items-center">
-                                <span class="text-sm text-gray-600 dark:text-gray-400">Rata-rata Waktu/Hari</span>
-                                <span class="text-sm font-semibold text-gray-900 dark:text-white">
-                                    {{ round($totalTimeInHours / max(1, now()->diffInDays(Note::where('user_id', $userId)->oldest()->first()->created_at ?? now())), 1) }}
-                                    jam
-                                </span>
-                            </div>
-                        @endif
                     </div>
                 </div>
 
@@ -289,7 +304,7 @@
                                             {{ $note->created_at->diffForHumans() }}</p>
                                     </div>
                                     <a href="{{ route('notepad') }}"
-                                        class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline ml-4">Ke Notepad</a>
+                                        class="text-xs text-indigo-600 dark:text-indigo-400 hover:underline ml-4">Buka</a>
                                 </div>
                             @endforeach
                         </div>

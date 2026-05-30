@@ -6,13 +6,15 @@ use App\Livewire\NotepadPage;
 use App\Livewire\SettingsPage;
 use App\Livewire\DashboardSettingsPage;
 
-// Opsional: Redirect halaman utama '/' langsung ke notepad
-Route::redirect('/', '/notepad');
+// Redirect halaman utama '/' langsung ke login
+Route::redirect('/', '/login');
 
-// Route untuk aplikasi Notepad
-Route::get('/notepad', NotepadPage::class)->name('notepad');
-Route::get('/settings', SettingsPage::class)->name('settings');
-Route::get('/dashboard-settings', DashboardSettingsPage::class)->name('dashboard-settings');
+// Route untuk aplikasi Notepad (harus login)
+Route::middleware('auth')->group(function () {
+    Route::get('/notepad', NotepadPage::class)->name('notepad');
+    Route::get('/settings', SettingsPage::class)->name('settings');
+    Route::get('/dashboard-settings', DashboardSettingsPage::class)->name('dashboard-settings');
+});
 
 // ---------------------------------------------------------
 // Routes Authentication
