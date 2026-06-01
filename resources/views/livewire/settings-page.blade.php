@@ -1,4 +1,5 @@
-<div class="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+<div class="flex h-screen overflow-hidden bg-gray-50 dark:bg-gray-900 transition-colors duration-200"
+    x-data="settingsApp()" x-init="init()">
 
     {{-- ═══════════════════════════════════════════
     SIDEBAR
@@ -74,8 +75,8 @@
         {{-- User Profile Footer --}}
         <div class="border-t border-gray-100 dark:border-gray-700 p-3">
             <div class="flex items-center gap-3">
-                <div
-                    class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden flex-shrink-0">
+                <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden flex-shrink-0 cursor-pointer hover:ring-2 hover:ring-indigo-500 transition-all"
+                    @click="openImageZoom('{{ auth()->check() && auth()->user()->profile_picture ? asset('storage/' . auth()->user()->profile_picture) : '' }}')">
                     @if (auth()->check() && auth()->user()->profile_picture)
                         <img src="{{ asset('storage/' . auth()->user()->profile_picture) }}"
                             alt="{{ auth()->user()->name ?? 'User' }}" class="w-full h-full object-cover">
@@ -118,8 +119,8 @@
                     <p class="text-xs text-gray-500 dark:text-gray-400">
                         {{ auth()->check() ? auth()->user()->email : 'guest@notepad.com' }}</p>
                 </div>
-                <div
-                    class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden flex-shrink-0 border-2 border-indigo-200 dark:border-indigo-800">
+                <div class="w-10 h-10 rounded-full bg-gray-200 dark:bg-gray-700 flex items-center justify-center overflow-hidden flex-shrink-0 border-2 border-indigo-200 dark:border-indigo-800 cursor-pointer hover:ring-2 hover:ring-indigo-500 transition-all"
+                    @click="openImageZoom('{{ auth()->check() && auth()->user()->profile_picture ? asset('storage/' . auth()->user()->profile_picture) : '' }}')">
                     @if (auth()->check() && auth()->user()->profile_picture)
                         <img src="{{ asset('storage/' . auth()->user()->profile_picture) }}"
                             alt="{{ auth()->user()->name ?? 'User' }}" class="w-full h-full object-cover">
@@ -172,7 +173,7 @@
                             Keamanan
                         </div>
                     </button>
-                    
+
                     <button wire:click="$set('activeTab', 'data')"
                         class="px-4 py-3 text-sm font-medium border-b-2 transition-colors {{ $activeTab === 'data' ? 'border-indigo-500 text-indigo-600 dark:text-indigo-400' : 'border-transparent text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300' }}">
                         <div class="flex items-center gap-2">
@@ -198,15 +199,15 @@
                                 Profile</label>
                             <div class="flex items-end gap-6">
                                 <div class="relative">
-                                    <div
-                                        class="w-32 h-32 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden border-2 border-gray-200 dark:border-gray-600">
+                                    <div class="w-32 h-32 rounded-full bg-gray-100 dark:bg-gray-700 flex items-center justify-center overflow-hidden border-2 border-gray-200 dark:border-gray-600 cursor-pointer hover:ring-2 hover:ring-indigo-500 transition-all"
+                                        @click="openImageZoom('{{ $profilePicture ? $profilePicture->temporaryUrl() : (auth()->check() && auth()->user()->profile_picture ? asset('storage/' . auth()->user()->profile_picture) : '') }}')">
                                         @if ($profilePicture)
                                             <img src="{{ $profilePicture->temporaryUrl() }}" alt="Preview"
-                                                class="w-full h-full object-cover">
+                                                class="w-full h-full object-cover pointer-events-none">
                                         @elseif(auth()->check() && auth()->user()->profile_picture)
                                             <img src="{{ asset('storage/' . auth()->user()->profile_picture) }}"
                                                 alt="{{ auth()->user()->name ?? 'User' }}"
-                                                class="w-full h-full object-cover">
+                                                class="w-full h-full object-cover pointer-events-none">
                                         @else
                                             <svg class="w-16 h-16 text-gray-400 dark:text-gray-500"
                                                 fill="currentColor" viewBox="0 0 24 24">
@@ -432,6 +433,47 @@
         </div>
 
     </main>
+
+    {{-- IMAGE ZOOM MODAL --}}
+    <div id="imageZoomModal" x-show="showZoom" x-cloak
+        @click="if ($event.target.id === 'imageZoomModal') closeImageZoom()"
+        class="fixed inset-0 bg-black/90 backdrop-blur-sm z-50 flex items-center justify-center p-4 flex-col">
+        <div class="flex items-center justify-between w-full mb-2 px-4">
+            <div class="text-white text-sm font-medium" x-show="zoomLevel" x-text="zoomLevel + '%'"></div>
+            <button @click="closeImageZoom()"
+                class="text-white hover:text-gray-300 transition-colors p-2 rounded-lg hover:bg-white/10">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                </svg>
+            </button>
+        </div>
+        <div class="flex-1 flex items-center justify-center overflow-auto" id="zoomContainer"
+            @wheel.prevent="zoomWithWheel($event)" @mousewheel.prevent="zoomWithWheel($event)">
+            <img id="zoomImage" :src="zoomImageSrc" :style="{ transform: 'scale(' + (zoomLevel / 100) + ')' }"
+                class="max-w-full max-h-full object-contain transition-transform duration-100 select-none cursor-zoom-out"
+                @click="closeImageZoom()" @load="fitImageToScreen()" />
+        </div>
+        <div class="flex items-center gap-3 mt-4">
+            <button @click="zoomOut()"
+                class="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-sm rounded-lg transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 12H4" />
+                </svg>
+            </button>
+            <input type="range" x-model.number="zoomLevel" min="50" max="300" step="10"
+                class="w-32 h-1 bg-white/20 rounded-lg appearance-none cursor-pointer accent-indigo-500" />
+            <button @click="zoomIn()"
+                class="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-sm rounded-lg transition-colors">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                </svg>
+            </button>
+            <button @click="resetZoom()"
+                class="px-3 py-1.5 bg-white/10 hover:bg-white/20 text-white text-sm rounded-lg transition-colors text-xs">
+                Reset
+            </button>
+        </div>
+    </div>
 
 </div>
 

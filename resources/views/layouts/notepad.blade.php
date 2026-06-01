@@ -39,153 +39,198 @@
     @livewireStyles
 
     <style>
-    /* Sembunyikan tombol file attachment */
-    trix-toolbar [data-trix-button-group="file-tools"] {
-        display: none !important;
-    }
+        /* Sembunyikan tombol file attachment */
+        trix-toolbar [data-trix-button-group="file-tools"] {
+            display: none !important;
+        }
 
-    /* Styling toolbar Trix agar lebih lega */
-    trix-toolbar {
-        background-color: #f9fafb !important;
-        border-bottom: 1px solid #e5e7eb !important;
-        padding: 10px 12px !important;
-        display: flex !important;
-        flex-wrap: wrap !important;
-        gap: 8px !important;
-        align-items: center !important;
-        justify-content: flex-start !important;
-    }
+        /* Styling toolbar Trix agar lebih lega */
+        trix-toolbar {
+            background-color: #f9fafb !important;
+            border-bottom: 1px solid #e5e7eb !important;
+            padding: 10px 12px !important;
+            display: flex !important;
+            flex-wrap: wrap !important;
+            gap: 8px !important;
+            align-items: center !important;
+            justify-content: flex-start !important;
+        }
 
-    .dark trix-toolbar {
-        background-color: #111827 !important;
-        border-bottom: 1px solid #374151 !important;
-    }
+        .dark trix-toolbar {
+            background-color: #111827 !important;
+            border-bottom: 1px solid #374151 !important;
+        }
 
-    trix-toolbar .trix-button-group {
-        border: 1px solid #d1d5db !important;
-        border-radius: 8px !important;
-        margin: 0 !important;
-        display: flex !important;
-        overflow: hidden !important;
-    }
+        trix-toolbar .trix-button-group {
+            border: 1px solid #d1d5db !important;
+            border-radius: 8px !important;
+            margin: 0 !important;
+            display: flex !important;
+            overflow: hidden !important;
+        }
 
-    .dark trix-toolbar .trix-button-group {
-        border-color: #4b5563 !important;
-    }
+        .dark trix-toolbar .trix-button-group {
+            border-color: #4b5563 !important;
+        }
 
-    trix-toolbar .trix-button {
-        border: none !important;
-        background: transparent !important;
-        color: #374151 !important;
-        padding: 8px 14px !important;
-        font-size: 14px !important;
-        border-radius: 0 !important;
-        min-width: 40px !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        transition: background-color 0.2s;
-    }
+        trix-toolbar .trix-button {
+            border: none !important;
+            background: transparent !important;
+            color: #374151 !important;
+            padding: 8px 14px !important;
+            font-size: 14px !important;
+            border-radius: 0 !important;
+            min-width: 40px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            transition: background-color 0.2s;
+        }
 
-    .dark trix-toolbar .trix-button {
-        color: #d1d5db !important;
-    }
+        .dark trix-toolbar .trix-button {
+            color: #d1d5db !important;
+        }
 
-    trix-toolbar .trix-button:hover {
-        background-color: #e5e7eb !important;
-    }
+        trix-toolbar .trix-button:hover {
+            background-color: #e5e7eb !important;
+        }
 
-    .dark trix-toolbar .trix-button:hover {
-        background-color: #374151 !important;
-    }
+        .dark trix-toolbar .trix-button:hover {
+            background-color: #374151 !important;
+        }
 
-    trix-toolbar .trix-button.trix-active {
-        background-color: #6366f1 !important;
-        color: white !important;
-    }
+        trix-toolbar .trix-button.trix-active {
+            background-color: #6366f1 !important;
+            color: white !important;
+        }
 
-    /* Ikon agar tetap terlihat jelas */
-    trix-toolbar .trix-button::before {
-        filter: none !important;
-        opacity: 0.8;
-    }
+        /* Ikon agar tetap terlihat jelas */
+        trix-toolbar .trix-button::before {
+            filter: none !important;
+            opacity: 0.8;
+        }
 
-    .dark trix-toolbar .trix-button::before {
-        filter: invert(0.8) !important;
-    }
+        .dark trix-toolbar .trix-button::before {
+            filter: invert(0.8) !important;
+        }
 
-    .dark trix-toolbar .trix-button.trix-active::before {
-        filter: invert(1) !important;
-    }
+        .dark trix-toolbar .trix-button.trix-active::before {
+            filter: invert(1) !important;
+        }
 
-    /* Trix editor content - lebih nyaman untuk menulis */
-    trix-editor {
-        min-height: 400px;
-        outline: none;
-        padding: 20px !important;
-        font-size: 16px !important;
-        line-height: 1.8 !important;
-        border: none !important;
-    }
+        /* Trix editor content - lebih nyaman untuk menulis */
+        trix-editor {
+            min-height: 400px;
+            outline: none;
+            padding: 20px !important;
+            font-size: 16px !important;
+            line-height: 1.8 !important;
+            border: none !important;
+        }
 
-    trix-editor:focus {
-        outline: none !important;
-        box-shadow: none !important;
-    }
+        trix-editor:focus {
+            outline: none !important;
+            box-shadow: none !important;
+        }
 
-    trix-editor h1 {
-        font-size: 1.8em !important;
-        font-weight: 700 !important;
-        margin: 0.5em 0 !important;
-    }
+        trix-editor h1 {
+            font-size: 1.8em !important;
+            font-weight: 700 !important;
+            margin: 0.5em 0 !important;
+        }
 
-    .dark trix-editor h1 {
-        color: #f9fafb !important;
-    }
+        .dark trix-editor h1 {
+            color: #f9fafb !important;
+        }
 
-    trix-editor blockquote {
-        border-left: 4px solid #6366f1 !important;
-        padding-left: 16px !important;
-        margin: 12px 0 !important;
-        color: #6b7280 !important;
-        font-style: italic !important;
-    }
+        trix-editor blockquote {
+            border-left: 4px solid #6366f1 !important;
+            padding-left: 16px !important;
+            margin: 12px 0 !important;
+            color: #6b7280 !important;
+            font-style: italic !important;
+        }
 
-    .dark trix-editor blockquote {
-        border-left-color: #818cf8 !important;
-        color: #9ca3af !important;
-    }
+        .dark trix-editor blockquote {
+            border-left-color: #818cf8 !important;
+            color: #9ca3af !important;
+        }
 
-    trix-editor pre {
-        background-color: #1f2937 !important;
-        color: #e5e7eb !important;
-        padding: 16px !important;
-        border-radius: 8px !important;
-        font-family: 'Courier New', monospace !important;
-        font-size: 14px !important;
-        overflow-x: auto !important;
-        margin: 12px 0 !important;
-    }
+        trix-editor pre {
+            background-color: #1f2937 !important;
+            color: #e5e7eb !important;
+            padding: 16px !important;
+            border-radius: 8px !important;
+            font-family: 'Courier New', monospace !important;
+            font-size: 14px !important;
+            overflow-x: auto !important;
+            margin: 12px 0 !important;
+        }
 
-    .dark trix-editor pre {
-        background-color: #111827 !important;
-        border: 1px solid #374151 !important;
-    }
+        .dark trix-editor pre {
+            background-color: #111827 !important;
+            border: 1px solid #374151 !important;
+        }
 
-    /* Note card */
-    .note-card {
-        transition: transform 0.15s, box-shadow 0.15s;
-    }
+        /* Note card */
+        .note-card {
+            transition: transform 0.15s, box-shadow 0.15s;
+        }
 
-    .note-card:hover {
-        transform: translateY(-1px);
-    }
+        .note-card:hover {
+            transform: translateY(-1px);
+        }
 
-    html, body {
-        height: 100%;
-        margin: 0;
-    }
-</style>
+        html,
+        body {
+            height: 100%;
+            margin: 0;
+        }
+
+        /* Zoom Modal Styling */
+        input[type="range"] {
+            cursor: pointer;
+        }
+
+        input[type="range"]::-webkit-slider-thumb {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(79, 70, 229, 0.5);
+        }
+
+        input[type="range"]::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: white;
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+            border: 2px solid rgba(79, 70, 229, 0.5);
+        }
+
+        #imageZoomModal {
+            animation: fadeIn 0.2s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+            }
+
+            to {
+                opacity: 1;
+            }
+        }
+
+        #zoomImage {
+            filter: drop-shadow(0 10px 30px rgba(0, 0, 0, 0.5));
+        }
+    </style>
 </head>
 
 <body class="h-full bg-gray-50 dark:bg-gray-900 font-sans antialiased">
@@ -350,6 +395,10 @@
                 ctx: null,
                 saving: false,
                 saved: false,
+                showZoom: false,
+                zoomImageSrc: '',
+                zoomLevel: 100,
+                initialZoomLevel: 100,
 
                 init() {
                     Livewire.on('note-saved', () => {
@@ -456,9 +505,127 @@
                     if (!this.canvas) return;
                     this.$wire.saveDrawing(this.canvas.toDataURL('image/png'));
                 },
+
+                openImageZoom(imageSrc) {
+                    if (!imageSrc) return;
+                    this.zoomImageSrc = imageSrc;
+                    this.showZoom = true;
+                    this.zoomLevel = 100;
+                    this.initialZoomLevel = 100;
+                    document.body.style.overflow = 'hidden';
+                    setTimeout(() => this.fitImageToScreen(), 100);
+                },
+
+                closeImageZoom() {
+                    this.showZoom = false;
+                    document.body.style.overflow = 'auto';
+                },
+
+                zoomIn() {
+                    this.zoomLevel = Math.min(300, this.zoomLevel + 10);
+                },
+
+                zoomOut() {
+                    this.zoomLevel = Math.max(50, this.zoomLevel - 10);
+                },
+
+                resetZoom() {
+                    this.zoomLevel = this.initialZoomLevel;
+                },
+
+                zoomWithWheel(e) {
+                    const delta = e.deltaY > 0 ? -10 : 10;
+                    this.zoomLevel = Math.max(50, Math.min(300, this.zoomLevel + delta));
+                },
+
+                fitImageToScreen() {
+                    const img = document.getElementById('zoomImage');
+                    const container = document.getElementById('zoomContainer');
+                    if (!img || !container || img.naturalWidth === 0) return;
+
+                    const containerWidth = container.clientWidth - 20;
+                    const containerHeight = container.clientHeight - 20;
+
+                    const imgRatio = img.naturalWidth / img.naturalHeight;
+                    const containerRatio = containerWidth / containerHeight;
+
+                    let scale = 1;
+                    if (imgRatio > containerRatio) {
+                        scale = containerWidth / img.naturalWidth;
+                    } else {
+                        scale = containerHeight / img.naturalHeight;
+                    }
+
+                    this.initialZoomLevel = Math.max(50, Math.min(100, Math.round(scale * 100)));
+                    this.zoomLevel = this.initialZoomLevel;
+                },
+            };
+        }
+        // ============================================================
+        // ALPINE - komponen settings
+        // ============================================================
+        function settingsApp() {
+            return {
+                showZoom: false,
+                zoomImageSrc: '',
+                zoomLevel: 100,
+                initialZoomLevel: 100,
+
+                init() {},
+
+                openImageZoom(imageSrc) {
+                    if (!imageSrc) return;
+                    this.zoomImageSrc = imageSrc;
+                    this.showZoom = true;
+                    this.zoomLevel = 100;
+                    this.initialZoomLevel = 100;
+                    document.body.style.overflow = 'hidden';
+                    setTimeout(() => this.fitImageToScreen(), 100);
+                },
+
+                closeImageZoom() {
+                    this.showZoom = false;
+                    document.body.style.overflow = 'auto';
+                },
+
+                zoomIn() {
+                    this.zoomLevel = Math.min(300, this.zoomLevel + 10);
+                },
+
+                zoomOut() {
+                    this.zoomLevel = Math.max(50, this.zoomLevel - 10);
+                },
+
+                resetZoom() {
+                    this.zoomLevel = this.initialZoomLevel;
+                },
+
+                zoomWithWheel(e) {
+                    const delta = e.deltaY > 0 ? -10 : 10;
+                    this.zoomLevel = Math.max(50, Math.min(300, this.zoomLevel + delta));
+                },
+
+                fitImageToScreen() {
+                    const img = document.getElementById('zoomImage');
+                    const container = document.getElementById('zoomContainer');
+                    if (!img || !container || img.naturalWidth === 0) return;
+
+                    const containerWidth = container.clientWidth - 20;
+                    const containerHeight = container.clientHeight - 20;
+
+                    const imgRatio = img.naturalWidth / img.naturalHeight;
+                    const containerRatio = containerWidth / containerHeight;
+
+                    let scale = 1;
+                    if (imgRatio > containerRatio) {
+                        scale = containerWidth / img.naturalWidth;
+                    } else {
+                        scale = containerHeight / img.naturalHeight;
+                    }
+
+                    this.initialZoomLevel = Math.max(50, Math.min(100, Math.round(scale * 100)));
+                    this.zoomLevel = this.initialZoomLevel;
+                },
             };
         }
     </script>
-</body>
-
-</html>

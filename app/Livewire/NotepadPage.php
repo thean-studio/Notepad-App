@@ -19,7 +19,7 @@ class NotepadPage extends Component
     // Sidebar & search
     public string $search      = '';
     public ?int   $filterTagId = null;
-    public string $activeTab   = 'all'; // all | pinned | trash
+    public string $activeTab   = 'all'; // all | pinned | trash | daily
 
     // Active note
     public ?int   $activeNoteId  = null;
@@ -70,11 +70,7 @@ class NotepadPage extends Component
             if ($this->activeTab === 'pinned') {
                 $query->where('is_pinned', true);
             }
-            $query->when($this->search, fn($q) => $q->where(
-                fn($q) =>
-                $q->where('title', 'like', '%' . $this->search . '%')
-                    ->orWhere('content', 'like', '%' . $this->search . '%')
-            ))
+            $query->when($this->search, fn($q) => $q->where('title', 'like', '%' . $this->search . '%'))
                 ->when($this->filterTagId, fn($q) => $q->whereHas(
                     'tags',
                     fn($q) =>
@@ -99,6 +95,38 @@ class NotepadPage extends Component
         return $this->activeNoteId
             ? Note::withTrashed()->with('tags')->find($this->activeNoteId)
             : null;
+    }
+
+    #[Computed]
+    public function dailyNotes()
+    {
+        $notes = Note::where('user_id', Auth::id())
+            ->when($this->search, fn($q) => $q->where('title', 'like', '%' . $this->search . '%'))
+            ->when($this->filterTagId, fn($q) => $q->whereHas(
+                'tags',
+                fn($q) => $q->where('tags.id', $this->filterTagId)
+            ))
+            ->orderByDesc('is_pinned')
+            ->orderByDesc('updated_at')
+            ->with('tags')
+            ->get();
+
+        $today = now()->startOfDay();
+        $yesterday = now()->subDay()->startOfDay();
+        $weekAgo = now()->subDays(7)->startOfDay();
+
+        $grouped = [
+            'Today' => $notes->filter(fn($n) => $n->updated_at->startOfDay()->eq($today)),
+            'Yesterday' => $notes->filter(fn($n) => $n->updated_at->startOfDay()->eq($yesterday)),
+            'This Week' => $notes->filter(
+                fn($n) =>
+                $n->updated_at->startOfDay()->gt($weekAgo) &&
+                    $n->updated_at->startOfDay()->lt($yesterday)
+            ),
+            'Older' => $notes->filter(fn($n) => $n->updated_at->startOfDay()->lte($weekAgo)),
+        ];
+
+        return array_filter($grouped, fn($items) => $items->count() > 0);
     }
 
     // ── Note CRUD ─────────────────────────────────────────────────
