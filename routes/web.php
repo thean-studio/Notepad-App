@@ -6,10 +6,12 @@ use App\Livewire\NotepadPage;
 use App\Livewire\SettingsPage;
 use App\Livewire\DashboardSettingsPage;
 
-// Redirect halaman utama '/' langsung ke login
-Route::redirect('/', '/login');
+// Halaman utama bersifat publik (Welcome Page)
+Route::get('/', function () {
+    return view('welcome');
+})->name('home');
 
-// Route untuk aplikasi Notepad (harus login)
+// Route untuk aplikasi Notepad (Hanya untuk yang sudah login)
 Route::middleware('auth')->group(function () {
     Route::get('/notepad', NotepadPage::class)->name('notepad');
     Route::get('/settings', SettingsPage::class)->name('settings');
